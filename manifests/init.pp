@@ -1,0 +1,5 @@
+#CHANGEME class name::subclass {
+
+
+
+}

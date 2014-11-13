@@ -1,0 +1,72 @@
+file    {'/etc/ssh/ssh_host_ecdsa_key':
+  ensure          => present,
+  source          => "puppet:///modules/cl-base-trusty/ssh/private/ecdsa/$::hostname.ecdsa",
+  owner           => root,
+  group           => root,
+  mode            => '0600',
+  backup          => false,
+  notify          => Service['ssh'],
+}
+
+service {'munge':
+  ensure          => running,
+  enable          => true,
+  subscribe       => File['/etc/munge/munge.key'],
+}
+
+
+package {'munge':                                  ensure => latest}
+package {'slurm-llnl':                             ensure => latest}
+package {'slurm-llnl-basic-plugins':               ensure => latest}
+package {'slurm-llnl-doc':                         ensure => latest}
+package {'slurm-llnl-slurmdbd':                    ensure => latest}
+package {'slurm-llnl-sview':                       ensure => latest}
+package {'slurm-llnl-torque':                      ensure => latest}
+
+file    {'/etc/aliases':
+  ensure          => file,
+  source          => "puppet:///modules/cl-base-trusty/aliases",
+  owner           => root,
+  group           => root,
+  mode            => '0644',
+  backup          => false,
+  notify		=> [
+  Service['postfix'],
+  Exec['postalias'],
+                ]
+}
+
+
+user { "systems":
+  ensure	=>	present,
+  uid	=>	'10000',
+  shell	=>	'/bin/bash',
+  home	=>	'/home/systems',
+  password =>	'$6$Wu/O5SYX$1y4W7Pqe/kpDFUPt4RSvBzu.SIBeCwzVjeVEAt8Un2J/fPe3B5CZ6OItu9zDkxpou2sYYotCGefroiDvQBc160',
+  managehome =>	true,
+}
+
+file    {'/etc/sssd/sssd.conf':
+  ensure          => present,
+  source          => "puppet:///modules/cl-base-trusty/sssd.conf",
+  owner           => root,
+  group           => root,
+  mode            => '0600',
+  backup          => false,
+  notify  =>      Service['sssd'],
+}
+
+file    {'/etc/pam.d/':
+  ensure          => directory,
+  source          => "puppet:///modules/cl-base-trusty/pam.d/",
+  owner           => root,
+  group           => root,
+  mode            => '0644',
+  backup          => false,
+}
+
+service {'sssd':
+  ensure          => running,
+  enable          => true,
+  subscribe       => File['/etc/sssd/sssd.conf'],
+}
